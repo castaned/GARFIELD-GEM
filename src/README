@@ -1,0 +1,33 @@
+# Steps to create MPI jobs to run the garfiled simulation.
+
+1.- Copy the src directory to your home directory in RAAD (don't run in /panfs/vol/HEP/GarfieldSim/PRO/)
+    (i.e.   cp -rf /panfs/vol/HEP/GarfieldSim/PRO/src/*   /home/USER/SOMEFOLDER)
+
+
+2.-  Initialize the environment for MPI
+     (i.e. source initialize.sh)
+
+3.-  Compile the code 
+     make 
+
+4.-  Create the MPI jobs 
+
+     Number of cpus, Number of events, gas mixture and penning transfer are defined in 
+     create_mpijobs.sh  (default values are 64 cpus, 5000 events, arco2 gas mixture and 0.4 pennin transfer) 
+     edit the file according to the configuration needed.  
+
+     Once conditions above are fixed then we just execute the bash script according to the study 
+     needed. 
+     (i.e.     ./create_mpijobs.sh <analysis>,  where <analysis> can be: gain, gasgapscan, holesize, etc.....)
+     
+     This will automatically create MPI jobs for required configurations considering ANSYS files located in:
+
+     /panfs/vol/HEP/GarfieldSim/PRO/ANSYS/
+
+5.-  Submit the jobs: 
+
+     (i.e.  qsub gapminus02pv2867.job)
+        
+     the output root file will stored in the same folder.
+
+
