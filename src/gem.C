@@ -82,13 +82,13 @@ int main(int argc, char **argv)
   /* Initialize MPI */
   MPI_Init(&argc, &argv);
 
-  /* Find out my identity in the default communicator */
+  /*  Find out my identity in the default communicator */
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
+  
   nEvents = atoi(argv[1]);
   if(myrank==0) cout << "NUMBER OF EVENTS: " << nEvents << endl;
-
+  
   if(argc<5) {
     cerr << "Command line error: Arguments required." << endl;
     MPI_Finalize();
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   }
 
   if(size<3) {
-    cerr << "Error: Requries at least 3 processes (1 master, 1 random_server, 1 or more slaves).\n";
+    cerr << "Error: Requeries at least 3 processes (1 master, 1 random_server, 1 or more slaves).\n";
     MPI_Finalize();
     return 1;
   }
