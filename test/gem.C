@@ -279,7 +279,8 @@ int main(int argc, char * argv[]) {
 
   if (plotDrift) {
     driftView->SetCanvas(cD);
-    driftView->Plot(true, true);
+    //    driftView->Plot(true, true);
+    driftView->Plot();
   }
 
   const bool plotHistogram = true;
