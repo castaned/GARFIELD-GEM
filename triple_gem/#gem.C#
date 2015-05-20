@@ -36,16 +36,23 @@ int main(int argc, char * argv[]) {
 
   // Load the field map.
   ComponentAnsys123* fm = new ComponentAnsys123();
-  const std::string efile = "ELIST.lis";
-  const std::string nfile = "NLIST.lis";
-  const std::string mfile = "MPLIST.lis";
-  const std::string sfile = "PRNSOL.lis";
+  const std::string efile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/ELIST.lis";
+  const std::string nfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/NLIST.lis";
+  const std::string mfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/MPLIST.lis";
+  const std::string sfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/PRNSOL.lis";
   fm->Initialise(efile, nfile, mfile, sfile, "mm");
   fm->EnableMirrorPeriodicityX();
   fm->EnableMirrorPeriodicityY();
   fm->PrintRange();
 
-  // Dimensions of the GEM
+
+  // Dimensions of the detector
+  const double Pitch = 0.088; // Pitch of strips
+  //  const double pitch = 0.014; // pitch of holes
+  //  const double smear = pitch/2.;
+  double singlecell  = 0.014;
+
+  // // Dimensions of the GEM
   const double pitch = 0.014;
   const double kapton = 50.e-4;
   const double metal = 5.e-4;
@@ -92,8 +99,8 @@ int main(int argc, char * argv[]) {
   // Create the sensor.
   Sensor* sensor = new Sensor();
   sensor->AddComponent(fm);
-  sensor->SetArea(-5 * pitch, -5 * pitch, -0.03,
-		  5 * pitch,  5 * pitch,  0.03);
+  sensor->SetArea(-5 * pitch, -5 * pitch, -0.5,
+                   5 * pitch,  5 * pitch,  0.5);
 
   AvalancheMicroscopic* aval = new AvalancheMicroscopic();
   aval->SetSensor(sensor);
@@ -106,117 +113,116 @@ int main(int argc, char * argv[]) {
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
   {
-    driftView->SetArea(-2 * pitch, -2 * pitch, -0.02,
-		       2 * pitch,  2 * pitch,  0.02);
-
+    driftView->SetArea(-2 * pitch, -2 * pitch, -0.5,
+                        2 * pitch,  2 * pitch,  0.5);
     // Plot every 10 collisions (in microscopic tracking).
     aval->SetCollisionSteps(10); 
     aval->EnablePlotting(driftView);
     drift->EnablePlotting(driftView);
   }
 
-  // Histograms
-  int nBinsGain = 100;
-  double gmin =   0.;
-  double gmax = 100.;
-  TH1F* hElectrons = new TH1F("hElectrons", "Number of electrons",
-                              nBinsGain, gmin, gmax);
-  TH1F* hIons = new TH1F("hIons", "Number of ions",
-                         nBinsGain, gmin, gmax);
+  // // Histograms
+  // int nBinsGain = 100;
+  // double gmin =   0.;
+  // double gmax = 100.;
+  // TH1F* hElectrons = new TH1F("hElectrons", "Number of electrons",
+  //                             nBinsGain, gmin, gmax);
+  // TH1F* hIons = new TH1F("hIons", "Number of ions",
+  //                        nBinsGain, gmin, gmax);
 
-  int nBinsChrg = 100;
-  TH1F* hChrgE = new TH1F("hChrgE", "Electrons on plastic",
-                          nBinsChrg, -0.5e4 * kapton, 0.5e4 * kapton);
-  TH1F* hChrgI = new TH1F("hChrgI", "Ions on plastic", 
-                          nBinsChrg, -0.5e4 * kapton, 0.5e4 * kapton);
+  // int nBinsChrg = 100;
+  // TH1F* hChrgE = new TH1F("hChrgE", "Electrons on plastic",
+  //                         nBinsChrg, -0.5e4 * kapton, 0.5e4 * kapton);
+  // TH1F* hChrgI = new TH1F("hChrgI", "Ions on plastic", 
+  //                         nBinsChrg, -0.5e4 * kapton, 0.5e4 * kapton);
 
-  double sumIonsTotal = 0.;
-  double sumIonsDrift = 0.;
-  double sumIonsPlastic = 0.;
+  // double sumIonsTotal = 0.;
+  // double sumIonsDrift = 0.;
+  // double sumIonsPlastic = 0.;
 
-  double sumElectronsTotal = 0.;
-  double sumElectronsPlastic = 0.;
-  double sumElectronsUpperMetal = 0.;
-  double sumElectronsLowerMetal = 0.;
-  double sumElectronsTransfer = 0.;
-  double sumElectronsOther = 0.;
+  // double sumElectronsTotal = 0.;
+  // double sumElectronsPlastic = 0.;
+  // double sumElectronsUpperMetal = 0.;
+  // double sumElectronsLowerMetal = 0.;
+  // double sumElectronsTransfer = 0.;
+  // double sumElectronsOther = 0.;
 
-  const int nEvents = 1;
-  for (int i = nEvents; i--;) { 
-    if (debug || i % 10 == 0) std::cout << i << "/" << nEvents << "\n";
-    // Randomize the initial position.
-    const double smear = pitch / 2.; 
-    double x0 = -smear + RndmUniform() * smear;
-    double y0 = -smear + RndmUniform() * smear;
-    double z0 = 0.025; 
-    double t0 = 0.;
-    double e0 = 0.1;
-    aval->AvalancheElectron(x0, y0, z0, t0, e0, 0., 0., 0.);
-    int ne = 0, ni = 0;
-    aval->GetAvalancheSize(ne, ni);
-    hElectrons->Fill(ne);
-    hIons->Fill(ni); 
-    const int np = aval->GetNumberOfElectronEndpoints();
-    double xe1, ye1, ze1, te1, e1;
-    double xe2, ye2, ze2, te2, e2;
-    double xi1, yi1, zi1, ti1;
-    double xi2, yi2, zi2, ti2;
-    int status;
-    for (int j = np; j--;) {
-      aval->GetElectronEndpoint(j, xe1, ye1, ze1, te1, e1, 
-                                   xe2, ye2, ze2, te2, e2, status);
-      sumElectronsTotal += 1.;
-      if (ze2 > -kapton / 2. && ze2 < kapton / 2.) {
-        hChrgE->Fill(ze2 * 1.e4);
-        sumElectronsPlastic += 1.;
-      } else if (ze2 >= kapton / 2. && ze2 <= kapton  / 2. + metal) {
-        sumElectronsUpperMetal += 1.;
-      } else if (ze2 <= -kapton / 2. && ze2 >= -kapton / 2. - metal) {
-        sumElectronsLowerMetal += 1.;
-      } else if (ze2 < -kapton / 2. - metal) {
-        sumElectronsTransfer += 1.;
-      } else {
-        sumElectronsOther += 1.;
-      }
-      drift->DriftIon(xe1, ye1, ze1, te1);
-      drift->GetIonEndpoint(0, xi1, yi1, zi1, ti1, 
-                               xi2, yi2, zi2, ti2, status);
-      if (zi1 < 0.01) {
-        sumIonsTotal += 1.;
-        if (zi2 > 0.01) sumIonsDrift += 1.;
-      }
-      if (zi2 > -kapton / 2. && zi2 < kapton / 2.) {
-        hChrgI->Fill(zi2 * 1.e4);
-        sumIonsPlastic += 1.;
-      }
-    }
-  }
+  // const int nEvents = 1;
+  // for (int i = nEvents; i--;) { 
+  //   if (debug || i % 10 == 0) std::cout << i << "/" << nEvents << "\n";
+  //   // Randomize the initial position.
+  //   const double smear = pitch / 2.; 
+  //   double x0 = -smear + RndmUniform() * smear;
+  //   double y0 = -smear + RndmUniform() * smear;
+  //   double z0 = 0.025; 
+  //   double t0 = 0.;
+  //   double e0 = 0.1;
+  //   aval->AvalancheElectron(x0, y0, z0, t0, e0, 0., 0., 0.);
+  //   int ne = 0, ni = 0;
+  //   aval->GetAvalancheSize(ne, ni);
+  //   hElectrons->Fill(ne);
+  //   hIons->Fill(ni); 
+  //   const int np = aval->GetNumberOfElectronEndpoints();
+  //   double xe1, ye1, ze1, te1, e1;
+  //   double xe2, ye2, ze2, te2, e2;
+  //   double xi1, yi1, zi1, ti1;
+  //   double xi2, yi2, zi2, ti2;
+  //   int status;
+  //   for (int j = np; j--;) {
+  //     aval->GetElectronEndpoint(j, xe1, ye1, ze1, te1, e1, 
+  //                                  xe2, ye2, ze2, te2, e2, status);
+  //     sumElectronsTotal += 1.;
+  //     if (ze2 > -kapton / 2. && ze2 < kapton / 2.) {
+  //       hChrgE->Fill(ze2 * 1.e4);
+  //       sumElectronsPlastic += 1.;
+  //     } else if (ze2 >= kapton / 2. && ze2 <= kapton  / 2. + metal) {
+  //       sumElectronsUpperMetal += 1.;
+  //     } else if (ze2 <= -kapton / 2. && ze2 >= -kapton / 2. - metal) {
+  //       sumElectronsLowerMetal += 1.;
+  //     } else if (ze2 < -kapton / 2. - metal) {
+  //       sumElectronsTransfer += 1.;
+  //     } else {
+  //       sumElectronsOther += 1.;
+  //     }
+  //     drift->DriftIon(xe1, ye1, ze1, te1);
+  //     drift->GetIonEndpoint(0, xi1, yi1, zi1, ti1, 
+  //                              xi2, yi2, zi2, ti2, status);
+  //     if (zi1 < 0.01) {
+  //       sumIonsTotal += 1.;
+  //       if (zi2 > 0.01) sumIonsDrift += 1.;
+  //     }
+  //     if (zi2 > -kapton / 2. && zi2 < kapton / 2.) {
+  //       hChrgI->Fill(zi2 * 1.e4);
+  //       sumIonsPlastic += 1.;
+  //     }
+  //   }
+  // }
 
-  double fFeedback = 0.;
-  if (sumIonsTotal > 0.) fFeedback = sumIonsDrift / sumIonsTotal;
-  std::cout << "Fraction of ions drifting back: " << fFeedback << "\n"; 
+  // double fFeedback = 0.;
+  // if (sumIonsTotal > 0.) fFeedback = sumIonsDrift / sumIonsTotal;
+  // std::cout << "Fraction of ions drifting back: " << fFeedback << "\n"; 
 
-  const double neMean = hElectrons->GetMean();
-  std::cout << "Mean number of electrons: " << neMean << "\n";
-  const double niMean = hIons->GetMean();
-  std::cout << "Mean number of ions: " << niMean << "\n";
+  // const double neMean = hElectrons->GetMean();
+  // std::cout << "Mean number of electrons: " << neMean << "\n";
+  // const double niMean = hIons->GetMean();
+  // std::cout << "Mean number of ions: " << niMean << "\n";
 
-  std::cout << "Mean number of electrons on plastic: "
-            << sumElectronsPlastic / nEvents << "\n";
-  std::cout << "Mean number of ions on plastic: "
-            << sumIonsPlastic / nEvents << "\n";
+  // std::cout << "Mean number of electrons on plastic: "
+  //           << sumElectronsPlastic / nEvents << "\n";
+  // std::cout << "Mean number of ions on plastic: "
+  //           << sumIonsPlastic / nEvents << "\n";
  
-  std::cout << "Electron endpoints:\n";
-  const double fUpperMetal = sumElectronsUpperMetal / sumElectronsTotal;
-  const double fPlastic = sumElectronsPlastic / sumElectronsTotal;
-  const double fLowerMetal = sumElectronsLowerMetal / sumElectronsTotal;
-  const double fTransfer = sumElectronsTransfer / sumElectronsTotal;
-  const double fOther = sumElectronsOther / sumElectronsTotal;
-  std::cout << "    upper metal: " << fUpperMetal * 100. << "%\n";
-  std::cout << "    plastic:     " << fPlastic * 100. << "%\n";
-  std::cout << "    lower metal: " << fLowerMetal * 100. << "%\n";
-  std::cout << "    transfer:    " << fTransfer * 100. << "%\n";
-  std::cout << "    other:       " << fOther * 100. << "%\n";
+  // std::cout << "Electron endpoints:\n";
+  // const double fUpperMetal = sumElectronsUpperMetal / sumElectronsTotal;
+  // const double fPlastic = sumElectronsPlastic / sumElectronsTotal;
+  // const double fLowerMetal = sumElectronsLowerMetal / sumElectronsTotal;
+  // const double fTransfer = sumElectronsTransfer / sumElectronsTotal;
+  // const double fOther = sumElectronsOther / sumElectronsTotal;
+  // std::cout << "    upper metal: " << fUpperMetal * 100. << "%\n";
+  // std::cout << "    plastic:     " << fPlastic * 100. << "%\n";
+  // std::cout << "    lower metal: " << fLowerMetal * 100. << "%\n";
+  // std::cout << "    transfer:    " << fTransfer * 100. << "%\n";
+  // std::cout << "    other:       " << fOther * 100. << "%\n";
 
   TCanvas* cD = new TCanvas();
   const bool plotGeo = true;
@@ -282,19 +288,19 @@ int main(int argc, char * argv[]) {
     driftView->Plot();
    }
 
-  const bool plotHistogram = true;
-  if (plotHistogram) {
-    TCanvas* cH = new TCanvas("cH", "Histograms", 800, 700);
-    cH->Divide(2, 2);
-    cH->cd(1);
-    hElectrons->Draw();
-    cH->cd(2);
-    hIons->Draw();
-    cH->cd(3);
-    hChrgE->Draw();
-    cH->cd(4);
-    hChrgI->Draw();
-  }
+  // const bool plotHistogram = true;
+  // if (plotHistogram) {
+  //   TCanvas* cH = new TCanvas("cH", "Histograms", 800, 700);
+  //   cH->Divide(2, 2);
+  //   cH->cd(1);
+  //   hElectrons->Draw();
+  //   cH->cd(2);
+  //   hIons->Draw();
+  //   cH->cd(3);
+  //   hChrgE->Draw();
+  //   cH->cd(4);
+  //   hChrgI->Draw();
+  // }
 
   app.Run(kTRUE);
 

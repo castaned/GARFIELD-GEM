@@ -36,10 +36,10 @@ int main(int argc, char * argv[]) {
 
   // Load the field map.
   ComponentAnsys123* fm = new ComponentAnsys123();
-  const std::string efile = "ELIST.lis";
-  const std::string nfile = "NLIST.lis";
-  const std::string mfile = "MPLIST.lis";
-  const std::string sfile = "PRNSOL.lis";
+  const std::string efile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/ELIST.lis";
+  const std::string nfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/NLIST.lis";
+  const std::string mfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/MPLIST.lis";
+  const std::string sfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/PRNSOL.lis";
   fm->Initialise(efile, nfile, mfile, sfile, "mm");
   fm->EnableMirrorPeriodicityX();
   fm->EnableMirrorPeriodicityY();
@@ -92,8 +92,8 @@ int main(int argc, char * argv[]) {
   // Create the sensor.
   Sensor* sensor = new Sensor();
   sensor->AddComponent(fm);
-  sensor->SetArea(-5 * pitch, -5 * pitch, -0.03,
-		  5 * pitch,  5 * pitch,  0.03);
+  sensor->SetArea(-5 * pitch, -5 * pitch, -0.3,
+		  5 * pitch,  5 * pitch,  0.3);
 
   AvalancheMicroscopic* aval = new AvalancheMicroscopic();
   aval->SetSensor(sensor);
@@ -219,7 +219,8 @@ int main(int argc, char * argv[]) {
   std::cout << "    other:       " << fOther * 100. << "%\n";
 
   TCanvas* cD = new TCanvas();
-  const bool plotGeo = true;
+  //  const bool plotGeo = true;
+  const bool plotGeo = false;
   if (plotGeo && plotDrift) {
     // Build the geometry in Root.
     TGeoManager* geoman = new TGeoManager("world", "geometry");
