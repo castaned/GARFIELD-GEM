@@ -1,10 +1,22 @@
+using namespace std;
 #include <iostream>
 #include <fstream>
 #include <cmath>
-
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TH1F.h>
+#include <TTree.h>
+#include <TFile.h>
+#include <TNtuple.h>
+#include "ComponentAnsys123.hh"
+#include "MediumMagboltz.hh"
+#include "Sensor.hh"
+#include "AvalancheMicroscopic.hh"
+#include "AvalancheMC.hh"
+#include "Random.hh"
+#include "Plotting.hh"
+#include "ViewField.hh"
+#include "ViewFEMesh.hh"
 #include <TGeoManager.h>
 #include <TGeoMaterial.h>
 #include <TGeoMedium.h>
@@ -15,201 +27,154 @@
 #include <TGeoHalfSpace.h>
 #include <TGeoMatrix.h>
 #include <TGeoCompositeShape.h>
-
-#include "ComponentAnsys123.hh"
-#include "ViewField.hh"
-#include "MediumMagboltz.hh"
-#include "Sensor.hh"
-#include "AvalancheMicroscopic.hh"
-#include "AvalancheMC.hh"
-#include "Random.hh"
-#include "Plotting.hh"
-#include "ComponentAnalyticField.hh"
-#include "ViewCell.hh"
-
 using namespace Garfield;
+using namespace std;
 
-int main(int argc, char * argv[]) {
+int main(int argc, char * argv[]) 
+  {
 
   TApplication app("app", &argc, argv);
   plottingEngine.SetDefaultStyle();
-
-  const bool debug = true;
+    
+  // Dimensions of the GEM
+  const double pitch = 0.014; // pitch of holes
+  const double smear = pitch/2.;
 
   // Load the field map.
   ComponentAnsys123* fm = new ComponentAnsys123();
-  const std::string efile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/ELIST.lis";
-  const std::string nfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/NLIST.lis";
-  const std::string mfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/MPLIST.lis";
-  const std::string sfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2679/PRNSOL.lis";
+
+  const std::string efile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/ELIST.lis";
+  const std::string nfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/NLIST.lis";
+  const std::string mfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/MPLIST.lis";
+  const std::string sfile = "/panfs/vol/HEP/GarfieldSim/PRO/ANSYS/gain/v2867/PRNSOL.lis";
+
   fm->Initialise(efile, nfile, mfile, sfile, "mm");
   fm->EnableMirrorPeriodicityX();
-  fm->EnableMirrorPeriodicityY();
+  fm->EnableMirrorPeriodicityZ();
+  fm->SetMagneticField(0.,0.,0.);
   fm->PrintRange();
-
-  // Dimensions of the detector
-  const double Pitch = 0.088; // Pitch of strips
-  const double pitch = 0.014; // pitch of holes
-  const double smear = pitch/2.;
-  double singlecell  = 0.014; // Dimensions of the GEM
-
-  // Magnetic field 
-  const double MagX = 0.;
-  const double MagY = 0.;
-  const double MagZ = 0.;
-
-
   const bool plotField = false;
-  if (plotField)
-    {
-      ViewField* fieldView = new ViewField();
-      fieldView->SetComponent(fm);
-      fieldView->PlotProfile(0., 0., 0.02, 0., 0., -0.02);
-      fieldView->SetPlane(0., -1., 0., 0., 0., 0.);
-      fieldView->SetArea(-pitch / 2., -0.02, pitch / 2., 0.02);
-     fieldView->SetVoltageRange(-360., 360.);
-     TCanvas* cF = new TCanvas();
-     fieldView->SetCanvas(cF);
-     fieldView->PlotContour();
-    }
-  
+  if (plotField) {
+    ViewField* fieldView = new ViewField();
+    fieldView->SetComponent(fm);
+    fieldView->SetPlane(0., 0., -1., -0.007, 0., 0.);
+    fieldView->SetArea(-.03, -0.4, 0.019, 0.5);
+    fieldView->SetVoltageRange(-3400., 0.);
+    TCanvas* cF = new TCanvas();
+    fieldView->SetCanvas(cF);
+    fieldView->PlotContour();
+  }
   // Setup the gas.
   MediumMagboltz* gas = new MediumMagboltz();
-  gas->SetComposition("ar", 70., "co2", 30.);
+  //  gas->SetComposition("ar", 45., "co2", 15., "cf4", 40.);
+gas->SetComposition("ar", 70., "co2", 30.);
+  // Temperature and pressure
   gas->SetTemperature(293.15);
   gas->SetPressure(760.);
-  gas->EnableDebugging();
   gas->Initialise();  
-  gas->DisableDebugging();
 
   // Set the Penning transfer efficiency.
-  const double rPenning = 0.57;
+  const double rPenning = 0.55;
   const double lambdaPenning = 0.;
   gas->EnablePenningTransfer(rPenning, lambdaPenning, "ar");
+  
   // Load the ion mobilities.
-  gas->LoadIonMobility("IonMobility_Ar+_Ar.txt");
+  gas->LoadIonMobility("/panfs/vol/y/yamaghr76/garfield/Data/IonMobility_Ar+_Ar.txt");
   
   // Associate the gas with the corresponding field map material. 
   const int nMaterials = fm->GetNumberOfMaterials();
-  for (int i = 0; i < nMaterials; ++i) {
+  for (int i = 0; i < nMaterials; ++i) 
+  {
     const double eps = fm->GetPermittivity(i);
     if (fabs(eps - 1.) < 1.e-3) fm->SetMedium(i, gas);
   }
   fm->PrintMaterials();
 
-  // Make a component with analytic electric field.
-  ComponentAnalyticField* cmpAmp  = new ComponentAnalyticField();
-
-  // Create a viewer.
-  ViewCell* view = new ViewCell();
-  // Set the pointer to the component.
-  view->SetComponent(cmp);
-  // Make a two-dimensional plot of the cell layout.
-  view->Plot3d();
-
-  
-  cmpAmp->AddPlaneY(0.30275, 1., "Driftplane");
-  cmpAmp->AddPlaneY(-0.4    , 0., "striplane");
-  
-  //Next we construct the Strips for readout of te signal, also with labels
-  double  Xstrip1 = -0.088, Xstrip2 = 0.0, Xstrip3 = 0.088, Xstrip4 = 0.176 ; //Store the center of strips
-  cmpAmp->AddStripOnPlaneY('z', -0.4, -0.122 , -0.054, "Strip1");
-  cmpAmp->AddStripOnPlaneY('z', -0.4, -0.034,   0.034, "Strip2");
-  cmpAmp->AddStripOnPlaneY('z', -0.4,  0.054,   0.122, "Strip3");
-  cmpAmp->AddStripOnPlaneY('z', -0.4,  0.142,   0.21, "Strip4");
- 
-  //calculate signal induced on the strip using ComponentAnalyticalField
-  cmpAmp->AddReadout("Strip1");
-  cmpAmp->AddReadout("Strip2");
-  cmpAmp->AddReadout("Strip3");
-  cmpAmp->AddReadout("Strip4");
-
-  //Set constant magnetic field in [Tesla]
-  fm->SetMagneticField(MagX, MagY, MagZ);
-  cmpAmp->SetMagneticField(MagX, MagY, MagZ);
-
-  // Create the sensor.
+  //Create the sensor.
   Sensor* sensor = new Sensor();
   sensor->AddComponent(fm);
-  sensor->SetArea(-10.*Pitch, -1., -10.*Pitch, 10.*Pitch, 1., 10.*Pitch);
-
-
-  sensor->AddElectrode(cmpAmp, "Strip1"); 
-  sensor->AddElectrode(cmpAmp, "Strip2"); 
-  sensor->AddElectrode(cmpAmp, "Strip3"); 
-  sensor->AddElectrode(cmpAmp, "Strip4"); 
+  sensor->SetArea(-2*pitch, -0.5, -.048, 2*pitch, 0.3, 0.048);
+  //  sensor->SetArea(-10.*pitch, -10.*pitch, -10., 10.*pitch, 10.*pitch, 10.);
   
-  const double tStart = 0.;
-  const double tStop  = 1000.;
-  const int nSteps    = 1000;
-  const double tStep  = (tStop - tStart) / nSteps;
-  
-  sensor->SetTimeWindow(tStart, tStep, nSteps);
-
-  
+  // avalanche 
   AvalancheMicroscopic* aval = new AvalancheMicroscopic();
   aval->SetSensor(sensor);
-  aval->EnableSignalCalculation(); 
-  aval->SetTimeWindow(tStart,tStop);
+  //aval->EnableAvalancheSizeLimit(1000);
   
   AvalancheMC* drift = new AvalancheMC();
   drift->SetSensor(sensor);
-  drift->SetDistanceSteps(2.e-2);
-
-  //  sensor->ClearSignal();
-
-  const bool plotDrift = true;
-  ViewDrift* driftView = new ViewDrift();
-  if (plotDrift) 
-    {
-      driftView->SetArea(-2 * pitch, -1., -2 * pitch,
-			 2 * pitch,  1,  2 * pitch);
-      
-      // Plot every 10 collisions (in microscopic tracking).
-      aval->SetCollisionSteps(10); 
-      aval->EnablePlotting(driftView);
-      drift->EnablePlotting(driftView);
-    }
+  drift->SetDistanceSteps(2.e-4);
   
-  // Histograms
-  int nBinsGain = 100;
-  double gmin =   0.;
-  double gmax = 100.;
-  TH1F* hElectrons = new TH1F("hElectrons", "Number of electrons",
-                              nBinsGain, gmin, gmax);
+  //Canvas to display the drift lines and the field
+  TCanvas * c = new TCanvas("c", "c", 1000, 20, 700, 500);
+  ViewDrift* viewdrift = new ViewDrift();
+  //  viewdrift->SetArea(-0.01, -0.4, 0., 0.,0.3, 0.02);
+viewdrift->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.048);
+  viewdrift->SetClusterMarkerSize(0.08);
+  viewdrift->SetCollisionMarkerSize(0.1);
 
-  const int nEvents = 1;
-  for (int i = nEvents; i--;) { 
-    if (debug || i % 10 == 0) std::cout << i << "/" << nEvents << "\n";
-    // Randomize the initial position.
-    const double smear = Pitch / 2.; 
-    double x0 = -smear + RndmUniform() * smear;
-    double y0 = 0.25;
-    double z0 = -smear + RndmUniform() * smear;
-    double t0 = 0.;
-    double e0 = 0.5;
+  // viewdrift->SetCanvas(c);
+  // new
+  ViewFEMesh* meshView = new ViewFEMesh();
+  meshView->SetComponent(fm);
+meshView->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.04);
+ meshView->SetFillMesh(true);
+  //  meshView->SetCanvas(c);
+
+  aval->EnablePlotting(viewdrift);
+  drift->EnablePlotting(viewdrift);
+  // viewdrift->Plot();
+  
+  // open a root file to write results
+  TFile* f = new TFile("test.root","RECREATE");
+  TNtuple* ntuple  = new TNtuple("ntuple","","ne:xe1:ye1:ze1:te1:e1:xe2:ye2:ze2:te2:e2");
+  TH1F* hElectrons = new TH1F("hElectrons", "Number of electrons", 1000, 0, 1000);
+  
+  // intitial parameters of the electron
+  const int nEvents = 2;
+  for (int i = 0; i<nEvents; i++) 
+  {    
+    double x0 = -0.0025;
+    double y0 = 0.025; 
+    double z0 = 0.006;
+    double t0 = 0.;  // time
+    double e0 = 0.5; //energy
+       
+    //make the avalanche for the defined electron
     aval->AvalancheElectron(x0, y0, z0, t0, e0, 0., 0., 0.);
+    
     int ne = 0, ni = 0;
     aval->GetAvalancheSize(ne, ni);
+    
+    //fill histogram of the avalanche size
     hElectrons->Fill(ne);
-  }
-
-
-  TCanvas* cD = new TCanvas();
+    
+    //track all the produced electrons 
+    const int np = aval->GetNumberOfElectronEndpoints();
+    double xe1, ye1, ze1, te1, e1;
+    double xe2, ye2, ze2, te2, e2;
+    int status;
+    
+    for (int j = np; j--;) 
+    {
+	 //electrons end points
+	 aval->GetElectronEndpoint(j, xe1, ye1, ze1, te1, e1, xe2, ye2, ze2, te2, e2, status);
+	 
+	 //fill the ntuple
+	 ntuple->Fill(ne,xe1,ye1,ze1,te1,e1,xe2,ye2,ze2,te2,e2);		
+    }
+    cout<<"event : "<<i<<", total numebr of produced electrons = "<<ne<<endl;
+    //    viewdrift->Plot();
+   meshView->SetViewDrift(viewdrift);
+  meshView->Plot();
  
-  if (plotDrift) {
-    driftView->SetCanvas(cD);
-    driftView->Plot();
   }
-
-  const bool plotHistogram = true;
-  if (plotHistogram) {
-    TCanvas* cH = new TCanvas("cH", "Histograms", 800, 700);
-    cH->Divide(2, 2);
-    cH->cd(1);
-    hElectrons->Draw();
-  }
-  
+  //  viewdrift->Plot();
+  //write the results in to the ntuple
+  f->Write();
+   
+ 
   app.Run(kTRUE);
 
+  //end
 }
