@@ -162,7 +162,7 @@ int main(int argc, char * argv[]) {
       drift->EnablePlotting(driftView);
     }
   
- // Histograms
+  // Histograms
   int nBinsGain = 100;
   double gmin =   0.;
   double gmax = 100.;
@@ -186,12 +186,12 @@ int main(int argc, char * argv[]) {
   }
 
 
-  // TCanvas* cD = new TCanvas();
+  TCanvas* cD = new TCanvas();
  
-  // if (plotDrift) {
-  //   driftView->SetCanvas(cD);
-  //   driftView->Plot();
-  //  }
+  if (plotDrift) {
+    driftView->SetCanvas(cD);
+    driftView->Plot();
+  }
 
   const bool plotHistogram = true;
   if (plotHistogram) {
