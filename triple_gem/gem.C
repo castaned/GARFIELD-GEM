@@ -50,23 +50,22 @@ int main(int argc, char * argv[]) {
   const double pitch = 0.014; // pitch of holes
   const double smear = pitch/2.;
   double singlecell  = 0.014; // Dimensions of the GEM
- const bool plotField = false;
 
 
- if (plotField)
-   {
-     ViewField* fieldView = new ViewField();
-     fieldView->SetComponent(fm);
-     fieldView->PlotProfile(0., 0., 0.02, 0., 0., -0.02);
-     fieldView->SetPlane(0., -1., 0., 0., 0., 0.);
-     fieldView->SetArea(-pitch / 2., -0.02, pitch / 2., 0.02);
+  const bool plotField = false;
+  if (plotField)
+    {
+      ViewField* fieldView = new ViewField();
+      fieldView->SetComponent(fm);
+      fieldView->PlotProfile(0., 0., 0.02, 0., 0., -0.02);
+      fieldView->SetPlane(0., -1., 0., 0., 0., 0.);
+      fieldView->SetArea(-pitch / 2., -0.02, pitch / 2., 0.02);
      fieldView->SetVoltageRange(-360., 360.);
      TCanvas* cF = new TCanvas();
      fieldView->SetCanvas(cF);
      fieldView->PlotContour();
-  }
-
-
+    }
+  
   // Setup the gas.
   MediumMagboltz* gas = new MediumMagboltz();
   gas->SetComposition("ar", 70., "co2", 30.);
@@ -108,8 +107,7 @@ int main(int argc, char * argv[]) {
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
   {
-    driftView->SetArea(-5 * pitch, -5 * pitch, -0.3,
-		       5 * pitch,  5 * pitch,  0.3);
+    driftView->SetArea(-5.*Pitch, -1., -5.*Pitch, 5.*Pitch, 1., 5.*Pitch);
     
     // Plot every 10 collisions (in microscopic tracking).
     aval->SetCollisionSteps(10); 
@@ -128,17 +126,18 @@ int main(int argc, char * argv[]) {
   for (int i = nEvents; i--;) { 
     if (debug || i % 10 == 0) std::cout << i << "/" << nEvents << "\n";
     // Randomize the initial position.
-    const double smear = pitch / 2.; 
+    const double smear = Pitch / 2.; 
     double x0 = -smear + RndmUniform() * smear;
-    double y0 = -smear + RndmUniform() * smear;
-    double z0 = 0.25; 
+    double y0 = 0.25;
+    double z0 = -smear + RndmUniform() * smear;
     double t0 = 0.;
-    double e0 = 0.1;
+    double e0 = 0.5;
     aval->AvalancheElectron(x0, y0, z0, t0, e0, 0., 0., 0.);
     int ne = 0, ni = 0;
     aval->GetAvalancheSize(ne, ni);
     hElectrons->Fill(ne);
   }
+
 
   TCanvas* cD = new TCanvas();
  
