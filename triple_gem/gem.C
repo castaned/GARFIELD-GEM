@@ -145,7 +145,7 @@ int main(int argc, char * argv[]) {
   
   AvalancheMC* drift = new AvalancheMC();
   drift->SetSensor(sensor);
-  drift->SetDistanceSteps(2.e-4);
+  drift->SetDistanceSteps(2.e-2);
 
   //  sensor->ClearSignal();
 
@@ -153,8 +153,8 @@ int main(int argc, char * argv[]) {
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
     {
-      driftView->SetArea(-5 * pitch, -1., -5 * pitch,
-			 5 * pitch,  1,  5 * pitch);
+      driftView->SetArea(-2 * pitch, -1., -2 * pitch,
+			 2 * pitch,  1,  2 * pitch);
       
       // Plot every 10 collisions (in microscopic tracking).
       aval->SetCollisionSteps(10); 
