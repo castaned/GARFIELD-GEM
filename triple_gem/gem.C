@@ -108,13 +108,36 @@ int main(int argc, char * argv[]) {
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
   {
-    driftView->SetArea(-2 * pitch, -2 * pitch, -0.02,
-		       2 * pitch,  2 * pitch,  0.02);
-
+    driftView->SetArea(-5 * pitch, -5 * pitch, -0.3,
+		       5 * pitch,  5 * pitch,  0.3);
+    
     // Plot every 10 collisions (in microscopic tracking).
     aval->SetCollisionSteps(10); 
     aval->EnablePlotting(driftView);
     drift->EnablePlotting(driftView);
+  }
+
+ // Histograms
+  int nBinsGain = 100;
+  double gmin =   0.;
+  double gmax = 100.;
+  TH1F* hElectrons = new TH1F("hElectrons", "Number of electrons",
+                              nBinsGain, gmin, gmax);
+
+  const int nEvents = 1;
+  for (int i = nEvents; i--;) { 
+    if (debug || i % 10 == 0) std::cout << i << "/" << nEvents << "\n";
+    // Randomize the initial position.
+    const double smear = pitch / 2.; 
+    double x0 = -smear + RndmUniform() * smear;
+    double y0 = -smear + RndmUniform() * smear;
+    double z0 = 0.25; 
+    double t0 = 0.;
+    double e0 = 0.1;
+    aval->AvalancheElectron(x0, y0, z0, t0, e0, 0., 0., 0.);
+    int ne = 0, ni = 0;
+    aval->GetAvalancheSize(ne, ni);
+    hElectrons->Fill(ne);
   }
 
   TCanvas* cD = new TCanvas();
@@ -124,7 +147,14 @@ int main(int argc, char * argv[]) {
     driftView->Plot();
    }
 
-
+  const bool plotHistogram = true;
+  if (plotHistogram) {
+    TCanvas* cH = new TCanvas("cH", "Histograms", 800, 700);
+    cH->Divide(2, 2);
+    cH->cd(1);
+    hElectrons->Draw();
+  }
+  
   app.Run(kTRUE);
 
 }
