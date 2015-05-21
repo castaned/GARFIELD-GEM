@@ -117,7 +117,7 @@ int main(int argc, char * argv[]) {
     drift->EnablePlotting(driftView);
   }
 
- 
+  TCanvas* cD = new TCanvas();
  
   if (plotDrift) {
     driftView->SetCanvas(cD);
