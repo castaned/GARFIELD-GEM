@@ -162,18 +162,6 @@ int main(int argc, char * argv[]) {
       drift->EnablePlotting(driftView);
     }
   
-  const bool plotDrift = true;
-  ViewDrift* driftView = new ViewDrift();
-  if (plotDrift) 
-  {
-    driftView->SetArea(-5.*Pitch, -1., -5.*Pitch, 5.*Pitch, 1., 5.*Pitch);
-    
-    // Plot every 10 collisions (in microscopic tracking).
-    aval->SetCollisionSteps(10); 
-    aval->EnablePlotting(driftView);
-    drift->EnablePlotting(driftView);
-  }
-
  // Histograms
   int nBinsGain = 100;
   double gmin =   0.;
