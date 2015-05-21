@@ -51,6 +51,11 @@ int main(int argc, char * argv[]) {
   const double smear = pitch/2.;
   double singlecell  = 0.014; // Dimensions of the GEM
 
+  // Magnetic field 
+  const double MagX = 0.;
+  const double MagY = 0.;
+  const double MagZ = 0.;
+
 
   const bool plotField = false;
   if (plotField)
@@ -90,19 +95,60 @@ int main(int argc, char * argv[]) {
   }
   fm->PrintMaterials();
 
+  // Make a component with analytic electric field.
+  ComponentAnalyticField* cmpAmp  = new ComponentAnalyticField();
+  
+  cmpAmp->AddPlaneY(0.30275, 1., "Driftplane");
+  cmpAmp->AddPlaneY(-0.4    , 0., "striplane");
+  
+  //Next we construct the Strips for readout of te signal, also with labels
+  double  Xstrip1 = -0.088, Xstrip2 = 0.0, Xstrip3 = 0.088, Xstrip4 = 0.176 ; //Store the center of strips
+  cmpAmp->AddStripOnPlaneY('z', -0.4, -0.122 , -0.054, "Strip1");
+  cmpAmp->AddStripOnPlaneY('z', -0.4, -0.034,   0.034, "Strip2");
+  cmpAmp->AddStripOnPlaneY('z', -0.4,  0.054,   0.122, "Strip3");
+  cmpAmp->AddStripOnPlaneY('z', -0.4,  0.142,   0.21, "Strip4");
+ 
+  //calculate signal induced on the strip using ComponentAnalyticalField
+  cmpAmp->AddReadout("Strip1");
+  cmpAmp->AddReadout("Strip2");
+  cmpAmp->AddReadout("Strip3");
+  cmpAmp->AddReadout("Strip4");
+
+  //Set constant magnetic field in [Tesla]
+  fm->SetMagneticField(MagX, MagY, MagZ);
+  cmpAmp->SetMagneticField(MagX, MagY, MagZ);
 
   // Create the sensor.
   Sensor* sensor = new Sensor();
   sensor->AddComponent(fm);
   sensor->SetArea(-10.*Pitch, -1., -10.*Pitch, 10.*Pitch, 1., 10.*Pitch);
 
+
+  sensor->AddElectrode(cmpAmp, "Strip1"); 
+  sensor->AddElectrode(cmpAmp, "Strip2"); 
+  sensor->AddElectrode(cmpAmp, "Strip3"); 
+  sensor->AddElectrode(cmpAmp, "Strip4"); 
+  
+  const double tStart = 0.;
+  const double tStop  = 1000.;
+  const int nSteps    = 1000;
+  const double tStep  = (tStop - tStart) / nSteps;
+  
+  sensor->SetTimeWindow(tStart, tStep, nSteps);
+
+  
   AvalancheMicroscopic* aval = new AvalancheMicroscopic();
   aval->SetSensor(sensor);
-
+  aval->EnableSignalCalculation(); 
+  aval->SetTimeWindow(tStart,tStop);
+  
   AvalancheMC* drift = new AvalancheMC();
   drift->SetSensor(sensor);
   drift->SetDistanceSteps(2.e-4);
 
+  sensor->ClearSignal();
+
+  
  const bool plotDrift = true;
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
@@ -139,12 +185,12 @@ int main(int argc, char * argv[]) {
   }
 
 
-  TCanvas* cD = new TCanvas();
+  // TCanvas* cD = new TCanvas();
  
-  if (plotDrift) {
-    driftView->SetCanvas(cD);
-    driftView->Plot();
-   }
+  // if (plotDrift) {
+  //   driftView->SetCanvas(cD);
+  //   driftView->Plot();
+  //  }
 
   const bool plotHistogram = true;
   if (plotHistogram) {
