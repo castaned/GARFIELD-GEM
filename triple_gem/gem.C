@@ -25,6 +25,7 @@
 #include "Random.hh"
 #include "Plotting.hh"
 #include "ComponentAnalyticField.hh"
+#include "ViewCell.hh"
 
 using namespace Garfield;
 
