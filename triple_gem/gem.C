@@ -45,13 +45,18 @@ int main(int argc, char * argv[]) {
   fm->EnableMirrorPeriodicityY();
   fm->PrintRange();
 
-  // Dimensions of the GEM
-  const double pitch = 0.014;
-  const double kapton = 50.e-4;
-  const double metal = 5.e-4;
-  const double outdia = 70.e-4;
-  const double middia = 50.e-4;
-
+  // Dimensions of the detector
+  const double Pitch = 0.088; // Pitch of strips
+  const double pitch = 0.014; // pitch of holes
+  const double smear = pitch/2.;
+  double singlecell  = 0.014; // Dimensions of the GEM
+ 
+  // Magnetic field 
+  const double MagX = 0.;
+  const double MagY = 0.;
+  const double MagZ = 0.;
+  
+ 
   const bool plotField = false;
   if (plotField)
   {
@@ -92,22 +97,32 @@ int main(int argc, char * argv[]) {
   // Create the sensor.
   Sensor* sensor = new Sensor();
   sensor->AddComponent(fm);
-  sensor->SetArea(-5 * pitch, -5 * pitch, -0.3,
-		  5 * pitch,  5 * pitch,  0.3);
+  sensor->SetArea(-10.*Pitch, -1., -10.*Pitch, 10.*Pitch, 1., 10.*Pitch);
 
+  sensor->AddElectrode(cmpAmp, "Strip1"); 
+  sensor->AddElectrode(cmpAmp, "Strip2"); 
+  sensor->AddElectrode(cmpAmp, "Strip3"); 
+  sensor->AddElectrode(cmpAmp, "Strip4"); 
+
+  sensor->SetTimeWindow(tStart, tStep, nSteps);
+  
   AvalancheMicroscopic* aval = new AvalancheMicroscopic();
   aval->SetSensor(sensor);
+  aval->EnableSignalCalculation(); 
+  aval->SetTimeWindow(tStart,tStop);
 
   AvalancheMC* drift = new AvalancheMC();
   drift->SetSensor(sensor);
   drift->SetDistanceSteps(2.e-4);
 
+  sensor->ClearSignal();
+
   const bool plotDrift = true;
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
   {
-    driftView->SetArea(-2 * pitch, -2 * pitch, -0.02,
-		       2 * pitch,  2 * pitch,  0.02);
+    driftView->SetArea(-2 * pitch, -2 * pitch, -0.2,
+		       2 * pitch,  2 * pitch,  0.2);
 
     // Plot every 10 collisions (in microscopic tracking).
     aval->SetCollisionSteps(10); 
