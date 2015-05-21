@@ -24,6 +24,7 @@
 #include "AvalancheMC.hh"
 #include "Random.hh"
 #include "Plotting.hh"
+#include "ComponentAnalyticField.hh"
 
 using namespace Garfield;
 
