@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
     {
-      driftView->SetArea(-5 * pitch, -1., -5 * ptich,
+      driftView->SetArea(-5 * pitch, -1., -5 * pitch,
 			 5 * pitch,  -1,  5 * pitch);
       
       // Plot every 10 collisions (in microscopic tracking).
