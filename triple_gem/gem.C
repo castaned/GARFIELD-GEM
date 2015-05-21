@@ -147,14 +147,14 @@ int main(int argc, char * argv[]) {
   drift->SetSensor(sensor);
   drift->SetDistanceSteps(2.e-4);
 
-  sensor->ClearSignal();
+  //  sensor->ClearSignal();
 
   const bool plotDrift = true;
   ViewDrift* driftView = new ViewDrift();
   if (plotDrift) 
     {
       driftView->SetArea(-5 * pitch, -1., -5 * pitch,
-			 5 * pitch,  -1,  5 * pitch);
+			 5 * pitch,  1,  5 * pitch);
       
       // Plot every 10 collisions (in microscopic tracking).
       aval->SetCollisionSteps(10); 
