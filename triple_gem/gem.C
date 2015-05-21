@@ -98,6 +98,14 @@ int main(int argc, char * argv[]) {
 
   // Make a component with analytic electric field.
   ComponentAnalyticField* cmpAmp  = new ComponentAnalyticField();
+
+  // Create a viewer.
+  ViewCell* view = new ViewCell();
+  // Set the pointer to the component.
+  view->SetComponent(cmp);
+  // Make a two-dimensional plot of the cell layout.
+  view->Plot3d();
+
   
   cmpAmp->AddPlaneY(0.30275, 1., "Driftplane");
   cmpAmp->AddPlaneY(-0.4    , 0., "striplane");
