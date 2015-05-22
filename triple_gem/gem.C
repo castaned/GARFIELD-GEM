@@ -74,7 +74,7 @@ gas->SetComposition("ar", 70., "co2", 30.);
   gas->Initialise();  
 
   // Set the Penning transfer efficiency.
-  const double rPenning = 0.55;
+  const double rPenning = 0.57;
   const double lambdaPenning = 0.;
   gas->EnablePenningTransfer(rPenning, lambdaPenning, "ar");
   
@@ -109,7 +109,7 @@ gas->SetComposition("ar", 70., "co2", 30.);
   TCanvas * c = new TCanvas("c", "c", 1000, 20, 700, 500);
   ViewDrift* viewdrift = new ViewDrift();
   //  viewdrift->SetArea(-0.01, -0.4, 0., 0.,0.3, 0.02);
-viewdrift->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.048);
+  viewdrift->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.048);
   viewdrift->SetClusterMarkerSize(0.08);
   viewdrift->SetCollisionMarkerSize(0.1);
 
@@ -117,10 +117,10 @@ viewdrift->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.048);
   // new
   ViewFEMesh* meshView = new ViewFEMesh();
   meshView->SetComponent(fm);
-meshView->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.04);
- meshView->SetFillMesh(true);
+  meshView->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.04);
+  meshView->SetFillMesh(true);
   //  meshView->SetCanvas(c);
-
+  
   aval->EnablePlotting(viewdrift);
   drift->EnablePlotting(viewdrift);
   // viewdrift->Plot();
@@ -165,9 +165,10 @@ meshView->SetArea(-2*pitch, -0.4, -.048, 2*pitch, 0.3, 0.04);
     }
     cout<<"event : "<<i<<", total numebr of produced electrons = "<<ne<<endl;
     //    viewdrift->Plot();
-   meshView->SetViewDrift(viewdrift);
-  meshView->Plot();
- 
+
+    //    meshView->SetViewDrift(viewdrift);
+    //    meshView->Plot();
+    
   }
   //  viewdrift->Plot();
   //write the results in to the ntuple
