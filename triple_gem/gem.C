@@ -90,21 +90,60 @@ gas->SetComposition("ar", 70., "co2", 30.);
   }
   fm->PrintMaterials();
 
+
+  // Make a component with analytic electric field.
+  ComponentAnalyticField* cmpAmp  = new ComponentAnalyticField();
+
+  cmpAmp->AddPlaneY(0.30275, 1., "Driftplane");
+  cmpAmp->AddPlaneY(-0.4    , 0., "striplane");
+  
+  //Next we construct the Strips for readout of te signal, also with labels
+  //  double  Xstrip1 = -0.088, Xstrip2 = 0.0, Xstrip3 = 0.088, Xstrip4 = 0.156 ; //Store the center of strips
+  double  Xstrip1 = -0.088, Xstrip2 = 0.0, Xstrip3 = 0.088, Xstrip4 = 0.176 ; //Store the center of strips
+  cmpAmp->AddStripOnPlaneY('z', -0.4, -0.122 , -0.054, "Strip1");
+  cmpAmp->AddStripOnPlaneY('z', -0.4, -0.034,   0.034, "Strip2");
+  cmpAmp->AddStripOnPlaneY('z', -0.4,  0.054,   0.122, "Strip3");
+  cmpAmp->AddStripOnPlaneY('z', -0.4,  0.142,   0.21, "Strip4");
+ 
+  //calculate signal induced on the strip using ComponentAnalyticalField
+  cmpAmp->AddReadout("Strip1");
+  cmpAmp->AddReadout("Strip2");
+  cmpAmp->AddReadout("Strip3");
+  cmpAmp->AddReadout("Strip4");
+  
   //Create the sensor.
   Sensor* sensor = new Sensor();
   sensor->AddComponent(fm);
   sensor->SetArea(-2*pitch, -0.5, -.048, 2*pitch, 0.3, 0.048);
   //  sensor->SetArea(-10.*pitch, -10.*pitch, -10., 10.*pitch, 10.*pitch, 10.);
+
+  sensor->AddElectrode(cmpAmp, "Strip1"); 
+  sensor->AddElectrode(cmpAmp, "Strip2"); 
+  sensor->AddElectrode(cmpAmp, "Strip3"); 
+  sensor->AddElectrode(cmpAmp, "Strip4");
+
+  const double tStart = 0.;
+  const double tStop  = 1000.;
+  const int nSteps    = 1000;
+  const double tStep  = (tStop - tStart) / nSteps;
+  
+  sensor->SetTimeWindow(tStart, tStep, nSteps);
+
   
   // avalanche 
   AvalancheMicroscopic* aval = new AvalancheMicroscopic();
   aval->SetSensor(sensor);
+  aval->EnableSignalCalculation(); 
+  aval->SetTimeWindow(tStart,tStop);
   //aval->EnableAvalancheSizeLimit(1000);
   
   AvalancheMC* drift = new AvalancheMC();
   drift->SetSensor(sensor);
   drift->SetDistanceSteps(2.e-4);
-  
+
+  //  sensor->ClearSignal();
+
+
   // //Canvas to display the drift lines and the field
   // TCanvas * c = new TCanvas("c", "c", 1000, 20, 700, 500);
   // ViewDrift* viewdrift = new ViewDrift();
@@ -138,7 +177,7 @@ gas->SetComposition("ar", 70., "co2", 30.);
     double y0 = 0.025; 
     double z0 = 0.006;
     double t0 = 0.;  // time
-    double e0 =1.0; //energy   0.5keV
+    double e0 = 1.0; //energy   0.5keV
        
     //make the avalanche for the defined electron
     aval->AvalancheElectron(x0, y0, z0, t0, e0, 0., 0., 0.);
