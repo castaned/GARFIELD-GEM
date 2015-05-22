@@ -27,6 +27,7 @@ using namespace std;
 #include <TGeoHalfSpace.h>
 #include <TGeoMatrix.h>
 #include <TGeoCompositeShape.h>
+#include "ComponentAnalyticField.hh"
 using namespace Garfield;
 using namespace std;
 
