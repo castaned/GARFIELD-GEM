@@ -15,8 +15,8 @@ ansys_dir=($(ls -d /panfs/vol/HEP/GarfieldSim/PRO/ANSYS/${STUDY}/*))
 echo " The ANSYS files considered are:  "  ${ansys_dir[@]}
 
 nev=5000                 # number of events to simulate (default=5000)
-gas="ar"                 #Noble gas to be used (usually in combination with CO2), could be ar,ne,he
-penning=0.57             # Penning Transfer efficiency, 0.57 for ArCO2, 0.48-0.52 for NeCO2, ? for HeCO2
+gas="ar"                 # Noble gas to be used (usually in combination with CO2),  ar=ArCO2, arco2cf2=ArCO2CF4, ne=NeCO2
+penning=0.57             # Penning Transfer efficiency, 0.57 for ArCO2/ArCO2CF4, 0.48-0.52 for NeCO2, ? for HeCO2
 email="alfredo.hernandez@qatar.tamu.edu"    #replace  by your email
 
 for i in "${ansys_dir[@]}"
