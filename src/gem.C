@@ -82,13 +82,13 @@ int main(int argc, char **argv)
   /* Initialize MPI */
   MPI_Init(&argc, &argv);
 
-  /*  Find out my identity in the default communicator */
+  /* Find out my identity in the default communicator */
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
+
   nEvents = atoi(argv[1]);
   if(myrank==0) cout << "NUMBER OF EVENTS: " << nEvents << endl;
-  
+
   if(argc<5) {
     cerr << "Command line error: Arguments required." << endl;
     MPI_Finalize();
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   }
 
   if(size<3) {
-    cerr << "Error: Requeries at least 3 processes (1 master, 1 random_server, 1 or more slaves).\n";
+    cerr << "Error: Requries at least 3 processes (1 master, 1 random_server, 1 or more slaves).\n";
     MPI_Finalize();
     return 1;
   }
@@ -309,22 +309,25 @@ void slave(int argc, char** argv,int myrank, int size, int random_server) {
   // Set the Penning transfer efficiency.
   double rPenning = 0.0;
   rPenning =  atof(argv[3]);
-  cout<<" penning transfer  "<<rPenning<<endl;
+  //  cout<<" penning transfer  "<<rPenning<<endl;
 
-  cout<<" noble gas  "<<noble_gas<<endl;
-  gas->SetComposition(noble_gas, 70., "co2", 30.);
+  //  cout<<" noble gas  "<<noble_gas<<endl;
+
+
+  if(noble_gas != "arco2cf4") gas->SetComposition(noble_gas, 70., "co2", 30.);
+  if(noble_gas == "arco2cf4") gas->SetComposition("ar",45.,"co2",15.,"cf4",40.);
   
   gas->SetTemperature(293.15);
   gas->SetPressure(760.);
   gas->Initialise();  
 
   const double lambdaPenning = 0.;
-  if(noble_gas == "ar") gas->EnablePenningTransfer(rPenning, lambdaPenning, "ar");
+  if(noble_gas == "ar" || noble_gas == "arco2cf4") gas->EnablePenningTransfer(rPenning, lambdaPenning, "ar");
   if(noble_gas == "ne") gas->EnablePenningTransfer(rPenning, lambdaPenning, "ne");
   
   // Load the ion mobilities.
 
-  if(noble_gas == "ar")  gas->LoadIonMobility("IonMobility/IonMobility_Ar+_Ar.txt");
+  if(noble_gas == "ar" || noble_gas == "arco2cf4")  gas->LoadIonMobility("IonMobility/IonMobility_Ar+_Ar.txt");
   if(noble_gas == "ne")  gas->LoadIonMobility("IonMobility/mob_Ne_Ne+.txt");
   
   // Associate the gas with the corresponding field map material. 
